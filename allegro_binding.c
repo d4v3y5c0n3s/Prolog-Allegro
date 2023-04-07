@@ -757,6 +757,7 @@ foreign_t al_set_new_bitmap_flags_wrapper (term_t flags_in) {
 }
 
 foreign_t al_draw_prim_wrapper (term_t vtxs_in, term_t decl_in, term_t texture_in, term_t start_in, term_t end_in, term_t type_in) {
+  PL_type_error("The 'al_draw_prim()' function is not implemented yet.", vtxs_in);
   int start;
   if(!PL_get_integer(start_in, &start)) PL_fail;
   int end;
