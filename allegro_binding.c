@@ -225,229 +225,226 @@ foreign_t al_register_event_source_wrapper(term_t queue_in, term_t source_in){
   PL_succeed;
 }
 
-foreign_t al_wait_for_event_wrapper(term_t event_queue_in, term_t event_out){
-  ALLEGRO_EVENT_QUEUE ** event_queue = NULL;
+term_t event2prologterm (ALLEGRO_EVENT * event) {
   ALLEGRO_EVENT_SOURCE * event_source = NULL;
-  ALLEGRO_EVENT event;
-  if(!blobterm2data(event_queue_in, &event_queue_blob, (void**)&event_queue)) PL_fail;
-  al_wait_for_event(*event_queue, &event);
+  term_t event_out = PL_new_term_ref();
   term_t ev_t = PL_new_term_ref();
   term_t ev_src = PL_new_term_ref();
   term_t ev_ts = PL_new_term_ref();
   term_t ev_specifics = PL_new_term_ref();
   functor_t ev_functor = PL_new_functor(PL_new_atom("allegro_event"), 4);
-  (void)!PL_put_uint64(ev_t, event.type);
-  event_source = event.any.source;
+  (void)!PL_put_uint64(ev_t, event->type);
+  event_source = event->any.source;
   if(!PL_unify_blob(ev_src, &event_source, sizeof(event_source), &event_source_ref_blob)) PL_fail;
-  (void)!PL_put_float(ev_ts, event.any.timestamp);
+  (void)!PL_put_float(ev_ts, event->any.timestamp);
   PL_put_nil(ev_specifics);
   term_t elem = PL_new_term_ref();
-  if (ALLEGRO_EVENT_TYPE_IS_USER(event.type)) {
-    PL_type_error("User events are not implemented yet.", event_queue_in);
+  if (ALLEGRO_EVENT_TYPE_IS_USER(event->type)) {
+    PL_type_error("User events are not implemented yet.", event_out);
   } else {
-    switch (event.type) {
+    switch (event->type) {
     case ALLEGRO_EVENT_JOYSTICK_AXIS :
-      (void)!PL_put_float(elem, event.joystick.pos);
+      (void)!PL_put_float(elem, event->joystick.pos);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.joystick.axis);
+      (void)!PL_put_int64(elem, event->joystick.axis);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.joystick.stick);
+      (void)!PL_put_int64(elem, event->joystick.stick);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.joystick.id, sizeof(event.joystick.id), &joystick_ref_blob);
+      (void)!PL_put_blob(elem, &event->joystick.id, sizeof(event->joystick.id), &joystick_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN :
-      (void)!PL_put_int64(elem, event.joystick.button);
+      (void)!PL_put_int64(elem, event->joystick.button);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.joystick.id, sizeof(event.joystick.id), &joystick_ref_blob);
+      (void)!PL_put_blob(elem, &event->joystick.id, sizeof(event->joystick.id), &joystick_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_JOYSTICK_BUTTON_UP :
-      (void)!PL_put_int64(elem, event.joystick.button);
+      (void)!PL_put_int64(elem, event->joystick.button);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.joystick.id, sizeof(event.joystick.id), &joystick_ref_blob);
+      (void)!PL_put_blob(elem, &event->joystick.id, sizeof(event->joystick.id), &joystick_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION :
       break;
     case ALLEGRO_EVENT_KEY_DOWN :
-      (void)!PL_put_blob(elem, &event.keyboard.display, sizeof(event.keyboard.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->keyboard.display, sizeof(event->keyboard.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.keyboard.keycode);
+      (void)!PL_put_int64(elem, event->keyboard.keycode);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_KEY_CHAR :
-      (void)!PL_put_blob(elem, &event.keyboard.display, sizeof(event.keyboard.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->keyboard.display, sizeof(event->keyboard.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_bool(elem, event.keyboard.repeat);
+      (void)!PL_put_bool(elem, event->keyboard.repeat);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_uint64(elem, event.keyboard.modifiers);
+      (void)!PL_put_uint64(elem, event->keyboard.modifiers);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.keyboard.unichar);
+      (void)!PL_put_int64(elem, event->keyboard.unichar);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.keyboard.keycode);
+      (void)!PL_put_int64(elem, event->keyboard.keycode);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_KEY_UP :
-      (void)!PL_put_blob(elem, &event.keyboard.display, sizeof(event.keyboard.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->keyboard.display, sizeof(event->keyboard.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.keyboard.keycode);
+      (void)!PL_put_int64(elem, event->keyboard.keycode);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_MOUSE_AXES :
-      (void)!PL_put_blob(elem, &event.mouse.display, sizeof(event.mouse.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->mouse.display, sizeof(event->mouse.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.mouse.pressure);
+      (void)!PL_put_float(elem, event->mouse.pressure);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dw);
+      (void)!PL_put_int64(elem, event->mouse.dw);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dz);
+      (void)!PL_put_int64(elem, event->mouse.dz);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dy);
+      (void)!PL_put_int64(elem, event->mouse.dy);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dx);
+      (void)!PL_put_int64(elem, event->mouse.dx);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.w);
+      (void)!PL_put_int64(elem, event->mouse.w);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.z);
+      (void)!PL_put_int64(elem, event->mouse.z);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.y);
+      (void)!PL_put_int64(elem, event->mouse.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.x);
+      (void)!PL_put_int64(elem, event->mouse.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN :
-      (void)!PL_put_blob(elem, &event.mouse.display, sizeof(event.mouse.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->mouse.display, sizeof(event->mouse.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.mouse.pressure);
+      (void)!PL_put_float(elem, event->mouse.pressure);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_uint64(elem, event.mouse.button);
+      (void)!PL_put_uint64(elem, event->mouse.button);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.w);
+      (void)!PL_put_int64(elem, event->mouse.w);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.z);
+      (void)!PL_put_int64(elem, event->mouse.z);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.y);
+      (void)!PL_put_int64(elem, event->mouse.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.x);
+      (void)!PL_put_int64(elem, event->mouse.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_MOUSE_BUTTON_UP :
-      (void)!PL_put_blob(elem, &event.mouse.display, sizeof(event.mouse.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->mouse.display, sizeof(event->mouse.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.mouse.pressure);
+      (void)!PL_put_float(elem, event->mouse.pressure);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_uint64(elem, event.mouse.button);
+      (void)!PL_put_uint64(elem, event->mouse.button);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.w);
+      (void)!PL_put_int64(elem, event->mouse.w);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.z);
+      (void)!PL_put_int64(elem, event->mouse.z);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.y);
+      (void)!PL_put_int64(elem, event->mouse.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.x);
+      (void)!PL_put_int64(elem, event->mouse.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY :
-      (void)!PL_put_blob(elem, &event.mouse.display, sizeof(event.mouse.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->mouse.display, sizeof(event->mouse.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.w);
+      (void)!PL_put_int64(elem, event->mouse.w);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.z);
+      (void)!PL_put_int64(elem, event->mouse.z);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.y);
+      (void)!PL_put_int64(elem, event->mouse.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.x);
+      (void)!PL_put_int64(elem, event->mouse.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_MOUSE_LEAVE_DISPLAY :
-      (void)!PL_put_blob(elem, &event.mouse.display, sizeof(event.mouse.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->mouse.display, sizeof(event->mouse.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.w);
+      (void)!PL_put_int64(elem, event->mouse.w);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.z);
+      (void)!PL_put_int64(elem, event->mouse.z);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.y);
+      (void)!PL_put_int64(elem, event->mouse.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.x);
+      (void)!PL_put_int64(elem, event->mouse.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_MOUSE_WARPED :
-      (void)!PL_put_blob(elem, &event.mouse.display, sizeof(event.mouse.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->mouse.display, sizeof(event->mouse.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.mouse.pressure);
+      (void)!PL_put_float(elem, event->mouse.pressure);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dw);
+      (void)!PL_put_int64(elem, event->mouse.dw);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dz);
+      (void)!PL_put_int64(elem, event->mouse.dz);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dy);
+      (void)!PL_put_int64(elem, event->mouse.dy);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.dx);
+      (void)!PL_put_int64(elem, event->mouse.dx);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.w);
+      (void)!PL_put_int64(elem, event->mouse.w);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.z);
+      (void)!PL_put_int64(elem, event->mouse.z);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.y);
+      (void)!PL_put_int64(elem, event->mouse.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.mouse.x);
+      (void)!PL_put_int64(elem, event->mouse.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_TIMER :
-      (void)!PL_put_int64(elem, event.timer.count);
+      (void)!PL_put_int64(elem, event->timer.count);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.timer.source, sizeof(event.timer.source), &timer_ref_blob);
+      (void)!PL_put_blob(elem, &event->timer.source, sizeof(event->timer.source), &timer_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_EXPOSE :
-      (void)!PL_put_int64(elem, event.display.height);
+      (void)!PL_put_int64(elem, event->display.height);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.display.width);
+      (void)!PL_put_int64(elem, event->display.width);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.display.y);
+      (void)!PL_put_int64(elem, event->display.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.display.x);
+      (void)!PL_put_int64(elem, event->display.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_RESIZE :
-      (void)!PL_put_int64(elem, event.display.height);
+      (void)!PL_put_int64(elem, event->display.height);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.display.width);
+      (void)!PL_put_int64(elem, event->display.width);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.display.y);
+      (void)!PL_put_int64(elem, event->display.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.display.x);
+      (void)!PL_put_int64(elem, event->display.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_CLOSE :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_LOST :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_FOUND :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_SWITCH_IN :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_ORIENTATION :
-      (void)!PL_put_int64(elem, event.display.orientation);
+      (void)!PL_put_int64(elem, event->display.orientation);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_HALT_DRAWING :
@@ -455,79 +452,79 @@ foreign_t al_wait_for_event_wrapper(term_t event_queue_in, term_t event_out){
     case ALLEGRO_EVENT_DISPLAY_RESUME_DRAWING :
       break;
     case ALLEGRO_EVENT_TOUCH_BEGIN :
-      (void)!PL_put_bool(elem, event.touch.primary);
+      (void)!PL_put_bool(elem, event->touch.primary);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dy);
+      (void)!PL_put_float(elem, event->touch.dy);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dx);
+      (void)!PL_put_float(elem, event->touch.dx);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.y);
+      (void)!PL_put_float(elem, event->touch.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.x);
+      (void)!PL_put_float(elem, event->touch.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.touch.id);
+      (void)!PL_put_int64(elem, event->touch.id);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.touch.display, sizeof(event.touch.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->touch.display, sizeof(event->touch.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_TOUCH_END :
-      (void)!PL_put_bool(elem, event.touch.primary);
+      (void)!PL_put_bool(elem, event->touch.primary);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dy);
+      (void)!PL_put_float(elem, event->touch.dy);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dx);
+      (void)!PL_put_float(elem, event->touch.dx);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.y);
+      (void)!PL_put_float(elem, event->touch.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.x);
+      (void)!PL_put_float(elem, event->touch.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.touch.id);
+      (void)!PL_put_int64(elem, event->touch.id);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.touch.display, sizeof(event.touch.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->touch.display, sizeof(event->touch.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_TOUCH_MOVE :
-      (void)!PL_put_bool(elem, event.touch.primary);
+      (void)!PL_put_bool(elem, event->touch.primary);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dy);
+      (void)!PL_put_float(elem, event->touch.dy);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dx);
+      (void)!PL_put_float(elem, event->touch.dx);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.y);
+      (void)!PL_put_float(elem, event->touch.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.x);
+      (void)!PL_put_float(elem, event->touch.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.touch.id);
+      (void)!PL_put_int64(elem, event->touch.id);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.touch.display, sizeof(event.touch.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->touch.display, sizeof(event->touch.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_TOUCH_CANCEL :
-      (void)!PL_put_bool(elem, event.touch.primary);
+      (void)!PL_put_bool(elem, event->touch.primary);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dy);
+      (void)!PL_put_float(elem, event->touch.dy);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.dx);
+      (void)!PL_put_float(elem, event->touch.dx);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.y);
+      (void)!PL_put_float(elem, event->touch.y);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_float(elem, event.touch.x);
+      (void)!PL_put_float(elem, event->touch.x);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_int64(elem, event.touch.id);
+      (void)!PL_put_int64(elem, event->touch.id);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
-      (void)!PL_put_blob(elem, &event.touch.display, sizeof(event.touch.display), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->touch.display, sizeof(event->touch.display), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_CONNECTED :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     case ALLEGRO_EVENT_DISPLAY_DISCONNECTED :
-      (void)!PL_put_blob(elem, &event.display.source, sizeof(event.display.source), &display_ref_blob);
+      (void)!PL_put_blob(elem, &event->display.source, sizeof(event->display.source), &display_ref_blob);
       (void)!PL_cons_list(ev_specifics, elem, ev_specifics);
       break;
     default :
-      PL_type_error("Unrecognized event from queue: ", event_queue_in);
+      PL_type_error("Unrecognized event from queue: ", event_out);
     }
   }
   (void)!PL_unify_functor(event_out, ev_functor);
@@ -535,6 +532,25 @@ foreign_t al_wait_for_event_wrapper(term_t event_queue_in, term_t event_out){
   (void)!PL_unify_arg(2, event_out, ev_src);
   (void)!PL_unify_arg(3, event_out, ev_ts);
   (void)!PL_unify_arg(4, event_out, ev_specifics);
+  return event_out;
+}
+
+foreign_t al_wait_for_event_wrapper(term_t event_queue_in, term_t event_out){
+  ALLEGRO_EVENT_QUEUE ** event_queue = NULL;
+  ALLEGRO_EVENT event;
+  if(!blobterm2data(event_queue_in, &event_queue_blob, (void**)&event_queue)) PL_fail;
+  al_wait_for_event(*event_queue, &event);
+  if(!PL_unify(event_out, event2prologterm(&event))) PL_fail;
+  PL_succeed;
+}
+
+foreign_t al_get_next_event_wrapper(term_t queue_in, term_t event_out) {
+  ALLEGRO_EVENT_QUEUE ** event_queue = NULL;
+  ALLEGRO_EVENT_SOURCE * event_source = NULL;
+  ALLEGRO_EVENT * event = NULL;
+  if(!blobterm2data(queue_in, &event_queue_blob, (void**)&event_queue)) PL_fail;
+  if(!al_get_next_event(*event_queue, event)) PL_fail;
+  if(!PL_unify(event_out, event2prologterm(event))) PL_fail;
   PL_succeed;
 }
 
@@ -794,6 +810,7 @@ install_t install_allegro_binding () {
   PL_register_foreign("al_create_event_queue", 1, al_create_event_queue_wrapper, 0);
   PL_register_foreign("al_register_event_source", 2, al_register_event_source_wrapper, 0);
   PL_register_foreign("al_wait_for_event", 2, al_wait_for_event_wrapper, 0);
+  PL_register_foreign("al_get_next_event", 2, al_get_next_event_wrapper, 0);
   PL_register_foreign("al_is_event_queue_empty", 2, al_is_event_queue_empty_wrapper, 0);
   PL_register_foreign("al_create_display", 3, al_create_display_wrapper, 0);
   PL_register_foreign("al_get_display_event_source", 2, al_get_display_event_source_wrapper, 0);
