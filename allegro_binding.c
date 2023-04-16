@@ -547,10 +547,10 @@ foreign_t al_wait_for_event_wrapper(term_t event_queue_in, term_t event_out){
 foreign_t al_get_next_event_wrapper(term_t queue_in, term_t event_out) {
   ALLEGRO_EVENT_QUEUE ** event_queue = NULL;
   ALLEGRO_EVENT_SOURCE * event_source = NULL;
-  ALLEGRO_EVENT * event = NULL;
+  ALLEGRO_EVENT event;
   if(!blobterm2data(queue_in, &event_queue_blob, (void**)&event_queue)) PL_fail;
-  if(!al_get_next_event(*event_queue, event)) PL_fail;
-  if(!PL_unify(event_out, event2prologterm(event))) PL_fail;
+  if(!al_get_next_event(*event_queue, &event)) PL_fail;
+  if(!PL_unify(event_out, event2prologterm(&event))) PL_fail;
   PL_succeed;
 }
 
